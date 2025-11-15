@@ -1,0 +1,34 @@
+{
+  "name": "pulsewatch",
+  "version": "1.0.0",
+  "description": "AI-powered Brand Mention & Reputation Tracker",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "nodemon server/index.js",
+    "client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "start": "node server/index.js",
+    "install-all": "npm install && cd client && npm install"
+  },
+  "keywords": ["brand-tracking", "sentiment-analysis", "ai", "reputation"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "axios": "^1.6.0",
+    "ws": "^8.14.2",
+    "xml2js": "^0.6.2",
+    "natural": "^6.10.0",
+    "ml-kmeans": "^6.0.0",
+    "@xenova/transformers": "^2.6.0",
+    "node-cache": "^5.1.2",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "concurrently": "^8.2.2"
+  }
+}
