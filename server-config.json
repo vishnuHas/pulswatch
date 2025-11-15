@@ -1,0 +1,6 @@
+{
+  "host": "0.0.0.0",
+  "port": 5000,
+  "staticIP": "10.235.3.186",
+  "note": "Update 'staticIP' with your current network IP when it changes. Run 'ipconfig' to find your IPv4 Address."
+}

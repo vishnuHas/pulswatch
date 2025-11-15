@@ -385,8 +385,22 @@ app.get('/api/health', (req, res) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 5000;
+const fs = require('fs');
+const path = require('path');
 const os = require('os');
+
+// Load server configuration
+let serverConfig = { host: '0.0.0.0', port: 5000, staticIP: null };
+try {
+  const configPath = path.join(__dirname, '..', 'server-config.json');
+  if (fs.existsSync(configPath)) {
+    serverConfig = { ...serverConfig, ...JSON.parse(fs.readFileSync(configPath, 'utf8')) };
+  }
+} catch (error) {
+  console.log('⚠️  Could not load server-config.json, using defaults');
+}
+
+const PORT = process.env.PORT || serverConfig.port;
 
 // Get local IP address
 function getLocalIP() {
@@ -401,23 +415,32 @@ function getLocalIP() {
   return 'localhost';
 }
 
-const localIP = getLocalIP();
+const detectedIP = getLocalIP();
+const displayIP = serverConfig.staticIP || detectedIP;
 
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, serverConfig.host, () => {
   console.log(`
 ╔════════════════════════════════════════════════════════════╗
 ║                                                            ║
 ║              🔵 PulseWatch Server Running                 ║
 ║                                                            ║
 ║  Local:      http://localhost:${PORT}                        ║
-║  Network:    http://${localIP}:${PORT}                   ║
-║  WebSocket:  ws://${localIP}:${PORT}                     ║
-║  Health:     http://${localIP}:${PORT}/api/health        ║
+║  Network:    http://${displayIP}:${PORT}                   ║
+║  WebSocket:  ws://${displayIP}:${PORT}                     ║
+║  Health:     http://${displayIP}:${PORT}/api/health        ║
 ║                                                            ║
 ║  📱 Mobile Access: Use Network URL above                  ║
+${serverConfig.staticIP ? '║  ⚙️  Using static IP from server-config.json             ║' : '║  🔍 Auto-detected IP (update server-config.json)         ║'}
+║                                                            ║
+║  💡 To update IP: Edit server-config.json                 ║
 ║                                                            ║
 ╚════════════════════════════════════════════════════════════╝
   `);
+  
+  if (detectedIP !== displayIP && serverConfig.staticIP) {
+    console.log(`\n⚠️  Network IP changed! Detected: ${detectedIP}`);
+    console.log(`   Update server-config.json with new IP\n`);
+  }
 });
 
 // Periodic updates (every 30 seconds)
