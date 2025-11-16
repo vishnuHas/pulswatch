@@ -5,17 +5,26 @@ import { MessageSquare, Smile, Target, TrendingUp, ArrowUpRight, Sparkles } from
 export default function QuickStatsCard({ mentions, sentimentData, clusterData }) {
   const [animationKey, setAnimationKey] = useState(0);
 
+  // Calculate cluster count (handle both array and object formats)
+  const getClusterCount = () => {
+    if (!clusterData) return 0;
+    if (Array.isArray(clusterData)) return clusterData.length;
+    if (typeof clusterData === 'object') return Object.keys(clusterData).length;
+    return 0;
+  };
+
+  const clusterCount = getClusterCount();
+
   // Trigger animation on data change
   useEffect(() => {
     setAnimationKey(prev => prev + 1);
-  }, [mentions.length, sentimentData?.positivePercent, clusterData?.length]);
+  }, [mentions.length, sentimentData?.positivePercent, clusterCount]);
 
   const stats = [
     { 
       label: 'Total Mentions', 
       value: mentions.length,
       displayValue: mentions.length,
-      change: '+12%',
       color: 'from-orange-400 to-orange-600',
       icon: MessageSquare 
     },
@@ -23,15 +32,13 @@ export default function QuickStatsCard({ mentions, sentimentData, clusterData })
       label: 'Positive Rate', 
       value: sentimentData?.positivePercent || 0,
       displayValue: `${sentimentData?.positivePercent || 0}%`,
-      change: '+8%',
       color: 'from-orange-500 to-pink-500',
       icon: Smile 
     },
     { 
       label: 'Active Topics', 
-      value: clusterData?.length || 0,
-      displayValue: clusterData?.length || 0,
-      change: '+5%',
+      value: clusterCount,
+      displayValue: clusterCount,
       color: 'from-pink-400 to-pink-600',
       icon: Target 
     }
@@ -92,18 +99,9 @@ export default function QuickStatsCard({ mentions, sentimentData, clusterData })
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.8 + index * 0.1, type: "spring" }}
-                    className="text-3xl font-bold text-gray-800 mb-1"
+                    className="text-3xl font-bold text-gray-800"
                   >
                     {stat.displayValue}
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1 + index * 0.1 }}
-                    className="flex items-center justify-center gap-1 text-green-600"
-                  >
-                    <ArrowUpRight className="w-4 h-4" />
-                    <span className="text-sm font-semibold">{stat.change}</span>
                   </motion.div>
                 </div>
 

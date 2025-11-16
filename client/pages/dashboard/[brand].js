@@ -70,11 +70,8 @@ export default function Dashboard({ darkMode, setDarkMode }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
-  const [notifications] = useState([
-    { id: 1, type: 'update', message: 'Dashboard data refreshed', time: '2m ago', read: false },
-    { id: 2, type: 'spike', message: 'Spike detected in mentions', time: '15m ago', read: false },
-    { id: 3, type: 'sentiment', message: 'Positive sentiment increased', time: '1h ago', read: true }
-  ]);
+  const [notifications, setNotifications] = useState([]);
+  const [notificationIdCounter, setNotificationIdCounter] = useState(1);
 
   // Auto-refresh every 2 minutes
   useEffect(() => {
@@ -85,18 +82,70 @@ export default function Dashboard({ darkMode, setDarkMode }) {
     return () => clearInterval(interval);
   }, [brand]);
 
+  // Add notification helper function
+  const addNotification = (type, message, severity = 'info') => {
+    const newNotification = {
+      id: notificationIdCounter,
+      type,
+      message,
+      severity,
+      time: 'Just now',
+      timestamp: new Date(),
+      read: false
+    };
+    setNotifications(prev => [newNotification, ...prev].slice(0, 20)); // Keep last 20
+    setNotificationIdCounter(prev => prev + 1);
+  };
+
+  // Mark notification as read
+  const markAsRead = (notificationId) => {
+    setNotifications(prev => prev.map(notif => 
+      notif.id === notificationId ? { ...notif, read: true } : notif
+    ));
+  };
+
+  // Mark all notifications as read
+  const markAllAsRead = () => {
+    setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
+  };
+
+  // Update notification times
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNotifications(prev => prev.map(notif => {
+        const secondsAgo = Math.floor((new Date() - notif.timestamp) / 1000);
+        let timeStr;
+        if (secondsAgo < 60) timeStr = 'Just now';
+        else if (secondsAgo < 3600) timeStr = `${Math.floor(secondsAgo / 60)}m ago`;
+        else if (secondsAgo < 86400) timeStr = `${Math.floor(secondsAgo / 3600)}h ago`;
+        else timeStr = `${Math.floor(secondsAgo / 86400)}d ago`;
+        return { ...notif, time: timeStr };
+      }));
+    }, 30000); // Update every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     if (brand) {
       loadDashboardData(true, true); // Initial load with loading screen
       const websocket = createWebSocket((data) => {
         if (data.type === 'mentions_update' && data.brand === brand) {
           setMentions(data.data.mentions);
+          addNotification('update', `Dashboard data refreshed - ${data.data.mentions.length} mentions found`);
+        } else if (data.type === 'spike_alert' && data.brand === brand) {
+          data.spikes.forEach(spike => {
+            addNotification(
+              'spike',
+              spike.message,
+              spike.severity
+            );
+          });
         }
       });
       setWs(websocket);
       return () => websocket?.close();
     }
-  }, [brand]);
+  }, [brand, notificationIdCounter]);
 
   const exportDashboardData = (format = 'all') => {
     setShowExportMenu(false);
@@ -323,6 +372,31 @@ export default function Dashboard({ darkMode, setDarkMode }) {
 
       setLoading(false);
       setIsRefreshing(false);
+
+      // Add notifications for data updates and insights
+      if (!isInitialLoad) {
+        // Notification for data refresh
+        addNotification('update', `Dashboard refreshed - ${mentionsWithSentiment.length} mentions analyzed`);
+        
+        // Notification for high volume
+        if (mentionsWithSentiment.length > 100) {
+          addNotification('spike', `High activity detected: ${mentionsWithSentiment.length} mentions`, 'info');
+        }
+        
+        // Notification for sentiment insights
+        if (sentimentResult.stats.positivePercent > 60) {
+          addNotification('sentiment', `Strong positive sentiment: ${Math.round(sentimentResult.stats.positivePercent)}%`, 'good');
+        } else if (sentimentResult.stats.negativePercent > 40) {
+          addNotification('sentiment', `High negative sentiment detected: ${Math.round(sentimentResult.stats.negativePercent)}%`, 'high');
+        }
+        
+        // Notification for spikes
+        if (spikesResult.spikes && spikesResult.spikes.length > 0) {
+          spikesResult.spikes.forEach(spike => {
+            addNotification('spike', spike.message, spike.severity);
+          });
+        }
+      }
 
       // Show toast notification if not initial load
       if (!isInitialLoad) {
@@ -558,55 +632,70 @@ export default function Dashboard({ darkMode, setDarkMode }) {
                   <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-white">
                     <div className="flex items-center justify-between">
                       <h3 className="font-bold text-gray-800">Notifications</h3>
-                      <span className="text-xs text-gray-500">
-                        {notifications.filter(n => !n.read).length} unread
-                      </span>
+                      {notifications.length > 0 && (
+                        <button 
+                          onClick={markAllAsRead}
+                          className="text-xs text-orange-600 hover:text-orange-700 font-semibold"
+                        >
+                          Mark all read
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="max-h-96 overflow-y-auto">
-                    {notifications.map((notification, index) => (
-                      <motion.div
-                        key={notification.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${
-                          !notification.read ? 'bg-orange-50/30' : ''
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                            notification.type === 'update' ? 'bg-blue-100' :
-                            notification.type === 'spike' ? 'bg-orange-100' :
-                            'bg-green-100'
-                          }`}>
-                            {notification.type === 'update' ? (
-                              <RefreshCw className="w-4 h-4 text-blue-600" />
-                            ) : notification.type === 'spike' ? (
-                              <Zap className="w-4 h-4 text-orange-600" />
-                            ) : (
-                              <TrendingUp className="w-4 h-4 text-green-600" />
+                    {notifications.length === 0 ? (
+                      <div className="p-8 text-center">
+                        <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-sm text-gray-500">No notifications yet</p>
+                        <p className="text-xs text-gray-400 mt-1">You'll be notified about updates and alerts</p>
+                      </div>
+                    ) : (
+                      notifications.map((notification, index) => (
+                        <motion.div
+                          key={notification.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          onClick={() => markAsRead(notification.id)}
+                          className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${
+                            !notification.read ? 'bg-orange-50/30' : ''
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                              notification.type === 'update' ? 'bg-blue-100' :
+                              notification.type === 'spike' ? 'bg-orange-100' :
+                              notification.severity === 'high' ? 'bg-red-100' :
+                              notification.severity === 'good' ? 'bg-green-100' :
+                              'bg-green-100'
+                            }`}>
+                              {notification.type === 'update' ? (
+                                <RefreshCw className="w-4 h-4 text-blue-600" />
+                              ) : notification.type === 'spike' ? (
+                                <Zap className={`w-4 h-4 ${
+                                  notification.severity === 'high' ? 'text-red-600' : 
+                                  notification.severity === 'good' ? 'text-green-600' : 
+                                  'text-orange-600'
+                                }`} />
+                              ) : (
+                                <TrendingUp className="w-4 h-4 text-green-600" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-800">
+                                {notification.message}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {notification.time}
+                              </p>
+                            </div>
+                            {!notification.read && (
+                              <div className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0 mt-2" />
                             )}
                           </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-800">
-                              {notification.message}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {notification.time}
-                            </p>
-                          </div>
-                          {!notification.read && (
-                            <div className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0 mt-2" />
-                          )}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                  <div className="p-3 bg-gray-50 text-center">
-                    <button className="text-sm font-semibold text-orange-600 hover:text-orange-700">
-                      View all notifications
-                    </button>
+                        </motion.div>
+                      ))
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -777,7 +866,7 @@ export default function Dashboard({ darkMode, setDarkMode }) {
           {/* Right Column - 4 cols on desktop, full width on mobile */}
           <div className="lg:col-span-4 space-y-4 md:space-y-6">
             <ScrollAnimatedCard delay={0} direction="right">
-              <HelpCard />
+              <HelpCard sentimentData={sentimentData} mentions={mentions} />
             </ScrollAnimatedCard>
             <ScrollAnimatedCard delay={0.1} direction="right">
               <SentimentCard sentimentData={sentimentData} />

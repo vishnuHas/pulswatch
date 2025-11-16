@@ -71,11 +71,11 @@ function MentionItem({ mention, index }) {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
-      className={`border-l-4 ${getSentimentColor()} rounded-lg p-4 hover:shadow-md transition-shadow`}
+      className={`border-l-4 ${getSentimentColor()} rounded-lg p-4 hover:shadow-md transition-shadow overflow-hidden`}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             {getSentimentIcon()}
             <span className={`text-xs font-semibold px-2 py-1 rounded ${getPlatformBadge()}`}>
               {mention.platform}
@@ -83,19 +83,19 @@ function MentionItem({ mention, index }) {
             <span className="text-xs text-gray-500">{timeAgo}</span>
           </div>
           
-          <h4 className="font-semibold text-gray-800 mb-1 line-clamp-2">
+          <h4 className="font-semibold text-gray-800 mb-1 line-clamp-2 break-words">
             {mention.title}
           </h4>
           
           {mention.text && mention.text !== mention.title && (
-            <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+            <p className="text-sm text-gray-600 line-clamp-2 mb-2 break-words">
               {mention.text}
             </p>
           )}
           
-          <div className="flex items-center gap-4 text-xs text-gray-500">
+          <div className="flex items-center gap-4 text-xs text-gray-500 flex-wrap">
             {mention.author && (
-              <span>by {mention.author}</span>
+              <span className="truncate max-w-[150px]">by {mention.author}</span>
             )}
             {mention.score !== undefined && (
               <span>⬆ {mention.score}</span>
@@ -111,7 +111,7 @@ function MentionItem({ mention, index }) {
             href={mention.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 transition-colors"
+            className="text-blue-600 hover:text-blue-800 transition-colors flex-shrink-0"
           >
             <ExternalLink className="w-5 h-5" />
           </a>

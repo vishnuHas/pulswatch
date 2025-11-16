@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, TrendingUp, TrendingDown, Activity, Zap, Bell } from 'lucide-react';
+import { AlertTriangle, TrendingUp, TrendingDown, Activity, Zap, AlertCircle } from 'lucide-react';
 
 export default function SpikeAlerts({ spikes }) {
   if (!spikes || spikes.length === 0) {
@@ -109,7 +109,7 @@ function SpikeAlert({ spike, index }) {
               isNegative ? 'bg-red-100' : 'bg-orange-100'
             }`}
           >
-            <Bell className={`w-5 h-5 ${
+            <AlertCircle className={`w-5 h-5 ${
               isNegative ? 'text-red-600' : 'text-orange-600'
             }`} />
           </motion.div>

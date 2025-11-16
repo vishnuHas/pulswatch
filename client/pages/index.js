@@ -7,6 +7,7 @@ import Navbar from '../components/Navbar';
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showWelcomePopup, setShowWelcomePopup] = useState(false);
+  const [showBrandWarning, setShowBrandWarning] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -26,14 +27,25 @@ export default function Home() {
     };
   }, []);
 
+  const popularBrands = ['OpenAI', 'Tesla', 'Apple', 'Google', 'Microsoft', 'Amazon'];
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/dashboard/${encodeURIComponent(searchQuery.trim())}`);
+      const brandName = searchQuery.trim();
+      const isPopularBrand = popularBrands.some(
+        brand => brand.toLowerCase() === brandName.toLowerCase()
+      );
+
+      if (!isPopularBrand) {
+        setShowBrandWarning(true);
+        setTimeout(() => setShowBrandWarning(false), 5000);
+        return;
+      }
+
+      router.push(`/dashboard/${encodeURIComponent(brandName)}`);
     }
   };
-
-  const popularBrands = ['OpenAI', 'Tesla', 'Apple', 'Google', 'Microsoft', 'Amazon'];
 
   return (
     <div className="min-h-screen bg-white overflow-hidden">
@@ -287,6 +299,65 @@ export default function Home() {
                 <p className="text-white text-xs sm:text-sm font-medium">
                   Try popular brands below!
                 </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Brand Warning Popup */}
+      <AnimatePresence>
+        {showBrandWarning && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: -20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: -20 }}
+            transition={{ type: "spring", damping: 20 }}
+            className="fixed top-20 sm:top-24 left-1/2 transform -translate-x-1/2 z-50 w-[90%] sm:w-auto max-w-lg"
+          >
+            <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-6 relative border-2 border-orange-200">
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setShowBrandWarning(false)}
+                className="absolute -top-2 -right-2 w-7 h-7 sm:w-8 sm:h-8 bg-orange-500 rounded-full flex items-center justify-center shadow-lg"
+              >
+                <X className="w-4 h-4 text-white" />
+              </motion.button>
+              
+              <div className="flex items-start gap-3 sm:gap-4">
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 1 }}
+                  className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0"
+                >
+                  <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
+                </motion.div>
+                <div className="flex-1">
+                  <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-2">
+                    Limited to Popular Brands
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-600 leading-relaxed mb-3">
+                    Sorry! Currently, PulseWatch can only build dashboards for popular brands to ensure quality data and accurate insights.
+                  </p>
+                  <p className="text-xs sm:text-sm text-gray-600 leading-relaxed mb-3">
+                    Please select one of the popular brands below:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {popularBrands.map((brand) => (
+                      <button
+                        key={brand}
+                        onClick={() => {
+                          setShowBrandWarning(false);
+                          router.push(`/dashboard/${brand}`);
+                        }}
+                        className="px-3 py-1.5 bg-orange-50 hover:bg-orange-100 text-orange-600 rounded-lg text-xs font-semibold transition-colors border border-orange-200"
+                      >
+                        {brand}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </motion.div>

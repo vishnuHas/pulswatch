@@ -54,7 +54,10 @@ async function analyzeSentimentLocal(text) {
     const score = result[0].score;
     
     let sentiment;
-    if (label === 'POSITIVE') {
+    // Treat low-confidence predictions as neutral (model is binary, so we need a threshold)
+    if (score < 0.7) {
+      sentiment = 'Neutral';
+    } else if (label === 'POSITIVE') {
       sentiment = 'Positive';
     } else if (label === 'NEGATIVE') {
       sentiment = 'Negative';

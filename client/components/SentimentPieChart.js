@@ -80,56 +80,72 @@ export default function SentimentPieChart({ stats }) {
         className="absolute inset-0 pointer-events-none"
       />
 
-      {/* Header */}
-      <div className="relative z-10 mb-8">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-2xl font-bold text-gray-800">Sentiment Analysis</h3>
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-          >
-            <Sparkles className="w-6 h-6 text-yellow-500" />
-          </motion.div>
-        </div>
-        <p className="text-gray-500 text-sm">AI-powered emotion detection</p>
-      </div>
-
       {/* Circular Progress - Like Real-time Section */}
       <div className="relative z-10 mb-6">
         <div className="relative w-40 h-40 mx-auto">
           <svg className="w-full h-full transform -rotate-90">
             {/* Background circle */}
             <circle cx="80" cy="80" r="70" stroke="#f3f4f6" strokeWidth="14" fill="none" />
-            {/* Positive arc - Orange */}
-            <motion.circle 
-              cx="80" 
-              cy="80" 
-              r="70" 
-              stroke="#f97316" 
-              strokeWidth="14" 
-              fill="none" 
-              strokeDasharray="440" 
-              strokeDashoffset={440 - (440 * positivePercent / 100)}
-              strokeLinecap="round"
-              initial={{ strokeDashoffset: 440 }}
-              animate={{ strokeDashoffset: 440 - (440 * positivePercent / 100) }}
-              transition={{ duration: 1.5, ease: "easeOut" }}
-            />
-            {/* Neutral arc - Light orange/peach */}
-            <motion.circle 
-              cx="80" 
-              cy="80" 
-              r="70" 
-              stroke="#fb923c" 
-              strokeWidth="14" 
-              fill="none" 
-              strokeDasharray="440" 
-              strokeDashoffset={440 - (440 * (positivePercent + neutralPercent) / 100)}
-              strokeLinecap="round"
-              initial={{ strokeDashoffset: 440 }}
-              animate={{ strokeDashoffset: 440 - (440 * (positivePercent + neutralPercent) / 100) }}
-              transition={{ duration: 1.5, delay: 0.2, ease: "easeOut" }}
-            />
+            
+            {/* Calculate circumference and arc lengths */}
+            {(() => {
+              const circumference = 440; // 2 * PI * radius (2 * 3.14159 * 70)
+              const positiveLength = (circumference * positivePercent) / 100;
+              const neutralLength = (circumference * neutralPercent) / 100;
+              const negativeLength = (circumference * negativePercent) / 100;
+              
+              return (
+                <>
+                  {/* Positive arc - Orange */}
+                  <motion.circle 
+                    cx="80" 
+                    cy="80" 
+                    r="70" 
+                    stroke="#f97316" 
+                    strokeWidth="14" 
+                    fill="none" 
+                    strokeDasharray={`${positiveLength} ${circumference - positiveLength}`}
+                    strokeDashoffset={0}
+                    initial={{ strokeDasharray: `0 ${circumference}` }}
+                    animate={{ strokeDasharray: `${positiveLength} ${circumference - positiveLength}` }}
+                    transition={{ duration: 1.5, ease: "easeOut" }}
+                    style={{ filter: 'drop-shadow(0 0 8px rgba(249, 115, 22, 0.4))' }}
+                  />
+                  
+                  {/* Neutral arc - Gray/Silver */}
+                  <motion.circle 
+                    cx="80" 
+                    cy="80" 
+                    r="70" 
+                    stroke="#94a3b8" 
+                    strokeWidth="14" 
+                    fill="none" 
+                    strokeDasharray={`${neutralLength} ${circumference - neutralLength}`}
+                    strokeDashoffset={-positiveLength}
+                    initial={{ strokeDasharray: `0 ${circumference}` }}
+                    animate={{ strokeDasharray: `${neutralLength} ${circumference - neutralLength}` }}
+                    transition={{ duration: 1.5, delay: 0.2, ease: "easeOut" }}
+                    style={{ filter: 'drop-shadow(0 0 8px rgba(148, 163, 184, 0.4))' }}
+                  />
+                  
+                  {/* Negative arc - Red */}
+                  <motion.circle 
+                    cx="80" 
+                    cy="80" 
+                    r="70" 
+                    stroke="#ef4444" 
+                    strokeWidth="14" 
+                    fill="none" 
+                    strokeDasharray={`${negativeLength} ${circumference - negativeLength}`}
+                    strokeDashoffset={-(positiveLength + neutralLength)}
+                    initial={{ strokeDasharray: `0 ${circumference}` }}
+                    animate={{ strokeDasharray: `${negativeLength} ${circumference - negativeLength}` }}
+                    transition={{ duration: 1.5, delay: 0.4, ease: "easeOut" }}
+                    style={{ filter: 'drop-shadow(0 0 8px rgba(239, 68, 68, 0.4))' }}
+                  />
+                </>
+              );
+            })()}
           </svg>
           {/* Center Content */}
           <div className="absolute inset-0 flex items-center justify-center flex-col">
@@ -137,11 +153,20 @@ export default function SentimentPieChart({ stats }) {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.5, type: "spring" }}
-              className="text-4xl font-bold text-orange-600"
+              className="text-center"
             >
-              {stats.positivePercent}%
+              <div>
+                <span className={`font-black ${
+                  stats.positivePercent > stats.negativePercent && stats.positivePercent > stats.neutralPercent ? 'text-3xl text-orange-600' :
+                  stats.negativePercent > stats.positivePercent && stats.negativePercent > stats.neutralPercent ? 'text-2xl text-red-600' :
+                  'text-3xl text-gray-600'
+                }`}>
+                  {stats.positivePercent > stats.negativePercent && stats.positivePercent > stats.neutralPercent ? 'Positive' :
+                   stats.negativePercent > stats.positivePercent && stats.negativePercent > stats.neutralPercent ? 'Negative' :
+                   'Neutral'}
+                </span>
+              </div>
             </motion.div>
-            <div className="text-xs text-gray-500">Positive</div>
           </div>
         </div>
       </div>

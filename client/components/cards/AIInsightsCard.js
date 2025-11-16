@@ -7,9 +7,9 @@ export default function AIInsightsCard({ insightsData }) {
       initial={{ opacity: 0, y: 20 }} 
       animate={{ opacity: 1, y: 0 }} 
       transition={{ delay: 0.5 }} 
-      className="bg-white rounded-3xl p-8 shadow-sm"
+      className="bg-white rounded-3xl p-4 sm:p-6 lg:p-8 shadow-sm"
     >
-      <h3 className="text-2xl font-bold mb-6">AI Insights</h3>
+      <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">AI Insights</h3>
       <InsightCard insights={insightsData} />
     </motion.div>
   );

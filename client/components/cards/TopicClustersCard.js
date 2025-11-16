@@ -7,9 +7,9 @@ export default function TopicClustersCard({ clusterData }) {
       initial={{ opacity: 0, y: 20 }} 
       animate={{ opacity: 1, y: 0 }} 
       transition={{ delay: 0.4 }} 
-      className="bg-white rounded-3xl p-8 shadow-sm"
+      className="bg-white rounded-3xl p-4 sm:p-6 lg:p-8 shadow-sm"
     >
-      <h3 className="text-2xl font-bold mb-6">Topic Clusters</h3>
+      <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Topic Clusters</h3>
       <TopicClusters clusters={clusterData} />
     </motion.div>
   );

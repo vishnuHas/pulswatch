@@ -1,11 +1,22 @@
 import { motion } from 'framer-motion';
-import { TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 
-export default function HelpCard() {
+export default function HelpCard({ sentimentData, mentions }) {
+  if (!sentimentData || !mentions) {
+    return null;
+  }
+
+  // Calculate real metrics from actual data
+  const brandScore = Math.round(sentimentData.positivePercent);
+  const sentimentScore = Math.round(
+    ((sentimentData.positive - sentimentData.negative) / sentimentData.total) * 100 + 50
+  );
+  const engagementScore = Math.min(100, Math.round((mentions.length / 10) * 10));
+
   const metrics = [
-    { label: 'Brand Score', value: 94, change: '+12', trend: 'up', max: 100 },
-    { label: 'Sentiment', value: 87, change: '+8', trend: 'up', max: 100 },
-    { label: 'Engagement', value: 76, change: '-3', trend: 'down', max: 100 }
+    { label: 'Brand Score', value: brandScore, max: 100 },
+    { label: 'Sentiment', value: sentimentScore, max: 100 },
+    { label: 'Engagement', value: engagementScore, max: 100 }
   ];
 
   return (
@@ -40,23 +51,7 @@ export default function HelpCard() {
           >
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-600">{metric.label}</span>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-gray-800">{metric.value}</span>
-                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full ${
-                  metric.trend === 'up' ? 'bg-green-50' : 'bg-red-50'
-                }`}>
-                  {metric.trend === 'up' ? (
-                    <ArrowUpRight className="w-3 h-3 text-green-600" />
-                  ) : (
-                    <ArrowDownRight className="w-3 h-3 text-red-600" />
-                  )}
-                  <span className={`text-xs font-semibold ${
-                    metric.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {metric.change}%
-                  </span>
-                </div>
-              </div>
+              <span className="text-lg font-bold text-gray-800">{metric.value}</span>
             </div>
             
             {/* Progress bar */}
